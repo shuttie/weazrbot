@@ -1,35 +1,45 @@
 package so.evil.weazrbot.core
 
-import so.evil.weazrbot.core.messages.{Disconnect, Connect, Download}
-import akka.actor.{PoisonPill, Actor}
+import akka.actor.Actor
+import so.evil.weazrbot.core.messages.Import
 import org.apache.commons.net.ftp.{FTP, FTPClient}
-import java.io._
-import so.evil.weazrbot.modules.Module
-import so.evil.weazrbot.core.messages.Connect
-import so.evil.weazrbot.core.messages.Download
+import java.net.URI
+import java.io.{BufferedOutputStream, ByteArrayOutputStream}
+import so.evil.weazrbot.core.db.Cassandra
+import org.apache.commons.io.IOUtils
 
 /**
- * Created by shutty on 3/21/14.
+ * Created by shutty on 4/15/14.
  */
-class Worker(val module:Module) extends Actor {
+class Worker(supplierName:String) extends Actor {
+  val db = Cassandra()
   val ftp = new FTPClient()
+  val supplier = SupplierFactory.build(db, supplierName)
+
+  override def postStop() = {
+    db.close()
+    if (ftp.isConnected) ftp.disconnect()
+    println("worker closed")
+  }
 
   def receive = {
-    case Connect(host:String, login:String, password:String) => {
-      ftp.connect(host)
-      ftp.login(login, password)
-    }
-    case Download(fileName:String) => {
-      val f = new File("/tmp/file2.grib2")
-      val stream = new BufferedOutputStream(new FileOutputStream(f))
-      ftp.setFileType(FTP.BINARY_FILE_TYPE)
-      ftp.retrieveFile(fileName, stream)
-      stream.close()
-      val snapshot = module.parse("/tmp/file2.grib2")
-    }
-    case Disconnect => {
-      ftp.disconnect()
-      self ! PoisonPill
+    case Import(target) => {
+      val uri = new URI(target)
+      val fileName = if (GribStore.exists(uri.getPath)) {
+        GribStore.getFileName(uri.getPath)
+      } else {
+        if (!ftp.isConnected) {
+          ftp.connect(uri.getHost)
+          ftp.login("anonymous","mail@evil.so")
+        }
+        ftp.setFileType(FTP.BINARY_FILE_TYPE)
+        val stream = ftp.retrieveFileStream(uri.getPath)
+        GribStore.store(uri.getPath, IOUtils.toByteArray(stream))
+        GribStore.getFileName(uri.getPath)
+      }
+      val data = supplier.parse(uri.getPath, fileName)
+      data.foreach(db.addWeather)
+      println("import done")
     }
   }
 }

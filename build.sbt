@@ -6,17 +6,17 @@ name := "weazrbot"
 
 version := "1.0"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.10.4"
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 resolvers += "UCAR repo" at "http://artifacts.unidata.ucar.edu/content/repositories/unidata-releases/"
 
-libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.2.3"
+libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.3.2"
 
-libraryDependencies += "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.0"
+libraryDependencies += "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.1"
 
-libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "0.6.0"
+libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "0.8.0"
 
 libraryDependencies += "org.apache.commons" % "commons-io" % "1.3.2"
 

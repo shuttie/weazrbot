@@ -1,8 +1,8 @@
 package so.evil.weazrbot
 
 import akka.actor.{Props, ActorSystem}
-import so.evil.weazrbot.core.Supervisor
-import so.evil.weazrbot.modules.GFSModule
+import so.evil.weazrbot.modules.GFSSupplier
+import so.evil.weazrbot.core.Monitor
 
 /**
  * Created by shutty on 3/1/14.
@@ -10,7 +10,7 @@ import so.evil.weazrbot.modules.GFSModule
 object Weazrbot {
   def main(args:Array[String]) = {
     val system = ActorSystem.create("weazr")
-    system.actorOf(Props(classOf[Supervisor], new GFSModule()), name = "supervisor")
+    system.actorOf(Props(classOf[Monitor], "gfs"), name = "gfs_monitor")
     system.awaitTermination()
   }
 }
